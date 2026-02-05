@@ -1,5 +1,9 @@
 # Appointment Booking Boilerplate
 
+<p align="center">
+  <img src="assets/vapi-langgraph-banner.png" alt="VAPI x LangGraph - Unlocking Language. Empowering Voice." width="720" />
+</p>
+
 Generic appointment booking system with a conversational LLM-based scheduling assistant. Includes backend API, frontend UI, and custom LLM server with LangGraph flows for booking, rescheduling, canceling, registration, and user verification.
 
 ---
@@ -305,8 +309,20 @@ You can visualize and debug the appointment LangGraph in [LangGraph Studio](http
 
 ## Running the project
 
-1. **Backend**: From `backend/`, copy `example.env` to `.env`, run `npm install`, `npx prisma migrate dev`, `npx prisma db seed`, then `npm run dev`.
-2. **Frontend**: From `frontend/`, run `npm install` and `npm run dev`.
-3. **Custom LLM server**: From `langgraph-customllm-vapi/`, copy `.env.example` to `.env`, set Azure OpenAI (or LLM) and API base URL, then run with `npm run dev` or `yarn dev`.
+1. **Backend**: From `backend/`, copy `example.env` to `.env`, set `DEFAULT_ADMIN_USERNAME` and `DEFAULT_ADMIN_PASSWORD` (used by seed and login). Run `npm install`, `npx prisma migrate dev`, `npm run seed`, then `npm run dev`.
+2. **Frontend**: From `frontend/`, run `npm install` and `npm run dev`. The app uses `VITE_API_BASE=/api` so API calls are proxied to the backend; frontend routes (e.g. `/appointments`) are not proxied, so reload works. Ensure the backend is running on port 4000. Open the app and sign in with the default admin credentials (see Admin UI below).
+3. **Custom LLM server**: From `langgraph-customllm-vapi/`, copy `.env.example` to `.env`, set Azure OpenAI (or LLM), API base URL, and optionally `APPOINTMENT_API_KEY` (when backend `REQUIRE_API_KEY=true`), then run with `npm run dev` or `yarn dev`.
 
 Refer to each package’s `package.json` and env files for scripts and required variables.
+
+---
+
+## Admin UI and authentication
+
+The frontend is an **admin dashboard** (ShadCN UI, light/dark theme) protected by username/password login.
+
+- **Login**: Default credentials come from backend env: `DEFAULT_ADMIN_USERNAME` and `DEFAULT_ADMIN_PASSWORD` (e.g. `admin` / `admin123` from `example.env`). The seed script creates this admin user.
+- **Pages**: Dashboard, Users (with "View appointments" per user), Organizations, Appointments (date range: default today to today+7), API Keys (create/list), and Chat (scheduling assistant).
+- **API key auth**: Public routes (caller-id, users, organizations, providers, availability, appointments) can require an `x-api-key` header. Set `REQUIRE_API_KEY=false` in backend `.env` for local dev without a key; set `true` in production and create keys via Admin → API Keys. The custom LLM reads `APPOINTMENT_API_KEY` (or `MOCK_API_KEY`) from its env and sends it as `x-api-key` when calling the backend.
+
+See [backend/docs/API.md](backend/docs/API.md) for admin login, admin endpoints, and API key request/response details.

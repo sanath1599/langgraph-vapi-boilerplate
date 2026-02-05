@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "appointment": "./src/graph/graph.ts:compileGraph"
+  },
+  "env": ".env"
+}

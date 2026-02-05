@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model CallerId {
+  id               Int      @id @default(autoincrement())
+  rawNumber        String
+  normalizedNumber String
+  country          String
+  type             String   // mobile | landline | unknown
+  createdAt        DateTime @default(now())
+
+  @@index([normalizedNumber])
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  externalId String?
+  firstName  String
+  lastName   String
+  dob        String   // date as string YYYY-MM-DD
+  gender     String
+  email      String?
+  phone      String?  // E.164 normalized
+  status     String   // active | inactive | deceased
+  memberId   String   @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  address      UserAddress?
+  meta         UserMeta?
+  appointments Appointment[]
+
+  @@index([phone])
+}
+
+model UserAddress {
+  id       Int    @id @default(autoincrement())
+  userId   Int    @unique
+  line1    String
+  line2    String?
+  city     String
+  state    String
+  zip      String
+  country  String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserMeta {
+  id                Int     @id @default(autoincrement())
+  userId            Int     @unique
+  insurance         String?
+  chronicConditions String? // JSON or comma-separated (generic metadata)
+  allergies         String? // JSON or comma-separated (generic metadata)
+  notes             String?
+  flags             String? // JSON
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Organization {
+  id                  Int    @id @default(autoincrement())
+  name                String
+  timezone            String
+  acceptingBookings   Boolean @default(true)
+  minDaysInAdvance    Int     @default(0)
+  maxDaysInAdvance    Int     @default(90)
+  workingHours        String  // JSON
+  allowedVisitTypes   String  // JSON array
+
+  providers          Provider[]
+  appointments       Appointment[]
+  availabilitySlots  AvailabilitySlot[]
+}
+
+model Provider {
+  id               Int     @id @default(autoincrement())
+  organizationId   Int
+  name             String
+  specialty        String
+  language         String
+  gender           String
+  active           Boolean @default(true)
+
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  appointments     Appointment[]
+  availabilitySlots AvailabilitySlot[]
+}
+
+model Appointment {
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  organizationId Int
+  providerId     Int
+  visitType      String
+  reason         String?
+  start          DateTime
+  end            DateTime
+  status         String   // booked | cancelled | completed
+  channel        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider   Provider           @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  slot       AvailabilitySlot?
+}
+
+model AvailabilitySlot {
+  id             Int       @id @default(autoincrement())
+  organizationId Int
+  providerId     Int
+  start          DateTime
+  end            DateTime
+  visitType      String
+  isBooked       Boolean   @default(false)
+  appointmentId  Int?      @unique
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  provider     Provider      @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  appointment   Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model ApiKey {
+  id         Int       @id @default(autoincrement())
+  keyHash    String    @unique
+  name       String?
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+}
