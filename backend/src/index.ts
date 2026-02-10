@@ -14,7 +14,7 @@ import availabilityRoutes from "./routes/availability";
 import appointmentsRoutes from "./routes/appointments";
 
 const app = express();
-app.use(cors({ origin: true }));
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 // Log every request
